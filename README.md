@@ -203,37 +203,38 @@ Workflow выполняет следующие этапы:
 Настройка GitHub Secrets
 
 В GitHub Repository должны быть настроены Secrets:
-
+```
 YC_CI_KEY_JSON
 DEPLOY_SSH_KEY
-
+```
 YC_CI_KEY_JSON содержит authorized key сервисного аккаунта: diplom-ci
 
 Этот аккаунт используется GitHub Actions для публикации Docker image в Yandex Container Registry.
 
 diplom-ci создаётся и проверяется через Ansible, но authorized key не нужно пересоздавать при каждом запуске. Это позволяет сохранить стабильное значение YC_CI_KEY_JSON.
-DEPLOY_SSH_KEY
 
 DEPLOY_SSH_KEY содержит приватный SSH-ключ для подключения GitHub Actions к виртуальным машинам:
-
+```
 web-b
 web-d
+```
 
 Публичный ключ должен быть добавлен в metadata VM или через cloud-init.
+
 Настройка GitHub Variables
 
 Ansible обновляет следующие Repository Variables:
-
+```
 YC_REGISTRY_ID
 WEB_B_IP
 WEB_D_IP
-
+```
 Пример актуальных значений после развёртывания:
-
+```
 YC_REGISTRY_ID = crpjuu6gmcfl07kln6pl
 WEB_B_IP       = 111.88.152.203
 WEB_D_IP       = 158.160.225.253
-
+```
 <img src = "img/dip-02.png" width = 100%>
 
 Значения IP-адресов могут измениться после пересоздания виртуальных машин, поэтому они не должны быть жёстко зашиты в workflow.
@@ -254,11 +255,11 @@ WEB_D_IP       = 158.160.225.253
 ## Клонирование репозиториев с кодом terraform, ansible и docker
 
 Для начала необходимо скачать проекты из GitHub. Для этого склонируйте репозиторий на локальный компьютер или сервер:
-
+```
 git clone git@github.com:aikochnev/diplom-ansible
 git clone git@github.com:aikochnev/diplom-docker
 git clone git@github.com:aikochnev/diplom-terraform
-
+```
 ## Авторизация в Yandex Cloud
 
 Перед запуском Terraform необходимо настроить авторизацию в Yandex Cloud и доступ к backend.
@@ -266,16 +267,16 @@ git clone git@github.com:aikochnev/diplom-terraform
 Если переменные окружения уже настроены, этот шаг можно пропустить.
 
 Для временной настройки переменных выполните:
-
+```
 export YC_TOKEN=$(yc iam create-token)
 export YC_CLOUD_ID=$(yc config get cloud-id)
 export YC_FOLDER_ID=$(yc config get folder-id)
-
+```
 Проверить значения можно командами:
-
+```
 echo "$YC_CLOUD_ID"
 echo "$YC_FOLDER_ID"
-
+```
 ## Настройка GitHub Secrets
 
 Перед запуском GitHub Actions добавьте секретные переменные в репозиторий.
@@ -311,11 +312,12 @@ yc iam key create \
 ## Запуск Terraform
 
 После настройки авторизации выполните:
-
+```
 cd ~/diplom/terraform
 terraform init
 terraform plan
 terraform apply
+```
 
 После подтверждения Terraform создаст инфраструктуру.
 
@@ -339,32 +341,32 @@ ansible-playbook bootstrap.yml
 После настройки инфраструктуры обычный деплой выполняется через GitHub Actions.
 
 Из каталога Docker-приложения:
-
+```
 cd ~/diplom/docker
 nano index.html
 git add .
 git commit -m "Update application"
 git push origin main
-
+```
 После успешного GitHub Actions deployment:
-
+```
 curl http://<WEB_B_IP>
 curl http://<WEB_D_IP>
-
+```
 Или откройте в браузере:
-
+```
 http://<WEB_B_IP>
 http://<WEB_D_IP>
-
+```
 Ожидаемый вывод:
 
 <img src = "img/dip-06.png" width = 100%>
 
 Проверка контейнера на VM:
-
+```
 docker ps
 docker images
-
+```
 <img src = "img/dip-07.png" width = 100%>
 
 Изменение версий приложения можно увидеть вот здесь:
@@ -384,30 +386,30 @@ docker images
 # Работа после пересоздания инфраструктуры
 
 Если необходимо полностью пересоздать инфраструктуру:
-
+```
 cd ~/diplom/terraform
 terraform destroy
 terraform apply
-
+```
 <img src = "img/dip-13.png" width = 100%>
 
 После нового apply нужно обновить GitHub Variables:
-
+```
 cd ~/diplom/ansible
 ansible-playbook bootstrap.yml
-
+```
 В результате Ansible получит новые IP-адреса и обновит:
-
+```
 WEB_B_IP
 WEB_D_IP
-
+```
 <img src = "img/dip-14.png" width = 100%>
 
 Проверка состояния проекта
-
+```
 cd ~/diplom/terraform
 terraform plan
-
+```
 Ожидаемый результат при отсутствии изменений:
 
 No changes. Your infrastructure matches the configuration.
@@ -427,3 +429,7 @@ No changes. Your infrastructure matches the configuration.
 <img src = "img/dip-20.png" width = 100%>
 
 <img src = "img/dip-21.png" width = 100%>
+
+<img src = "img/dip-22.png" width = 100%>
+
+<img src = "img/dip-23.png" width = 100%>
